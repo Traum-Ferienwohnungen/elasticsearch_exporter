@@ -51,7 +51,7 @@ docker:
 	@echo ">> building docker image"
 	@docker build -t "$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)" .
 
-push
+push:
 	@echo ">> pushing docker image"
 	@docker login -u="$(DOCKER_USERNAME)" -p="$(DOCKER_PASSWORD)" quay.io
 	@docker push $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)
