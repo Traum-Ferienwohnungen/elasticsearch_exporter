@@ -1,5 +1,5 @@
 repository:
-    path: github.com/traum-ferienwohnungen/elasticsearch_exporter
+    path: github.com/Traum-Ferienwohnungen/elasticsearch_exporter
 build:
     flags: -a -tags netgo
     ldflags: |
