@@ -57,6 +57,54 @@ var (
 		"indices_refresh_total_time_ms_total":   "Total time spent refreshing",
 	}
 	counterVecMetrics = map[string]*VecInfo{
+		"indices_fielddata_hit_count": &VecInfo{
+			help:   "Hit count of field data",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_filter_cache_hit_count": &VecInfo{
+			help:   "Hit count of filter cache",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_query_cache_hit_count": &VecInfo{
+			help:   "Hit count of query cache",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_request_cache_hit_count": &VecInfo{
+			help:   "Hit count of request cache",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_fielddata_total_count": &VecInfo{
+			help:   "Total request count of field data",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_filter_cache_total_count": &VecInfo{
+			help:   "Total request count of filter cache",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_query_cache_total_count": &VecInfo{
+			help:   "Total request count of query cache",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_request_cache_total_count": &VecInfo{
+			help:   "Total request count of request cache",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_search_query_total": &VecInfo{
+			help:   "Total number of queries",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_search_query_time_ms_total": &VecInfo{
+			help:   "Total time spent querying",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_search_fetch_total": &VecInfo{
+			help:   "Total number of fetches",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_search_fetch_time_ms_total": &VecInfo{
+			help:   "Total time spent fetching",
+			labels: []string{"cluster", "node"},
+		},
 		"jvm_gc_collection_seconds_count": {
 			help:   "Count of JVM GC runs",
 			labels: []string{"gc"},
@@ -103,6 +151,22 @@ var (
 		"filesystem_data_size_bytes": {
 			help:   "Size of block device in bytes",
 			labels: []string{"mount", "path"},
+		},
+		"indices_fielddata_cache_size": &VecInfo{
+			help:   "Field data cache size",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_filter_cache_cache_size": &VecInfo{
+			help:   "Filter cache size",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_query_cache_cache_size": &VecInfo{
+			help:   "Query cache size",
+			labels: []string{"cluster", "node"},
+		},
+		"indices_request_cache_cache_size": &VecInfo{
+			help:   "Request cache size",
+			labels: []string{"cluster", "node"},
 		},
 		"jvm_memory_committed_bytes": {
 			help:   "JVM memory currently committed by area",
@@ -385,16 +449,28 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 		// Indices Stats
 		e.gauges["indices_fielddata_memory_size_bytes"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FieldData.MemorySize))
+		e.gauges["indices_fielddata_cache_size"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FieldData.CacheSize))
 		e.counters["indices_fielddata_evictions"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FieldData.Evictions))
+		e.counters["indices_fielddata_hit_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FieldData.HitCount))
+		e.counters["indices_fielddata_total_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FieldData.TotalCount))
 
 		e.gauges["indices_filter_cache_memory_size_bytes"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FilterCache.MemorySize))
+		e.gauges["indices_filter_cache_cache_size"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FilterCache.CacheSize))
 		e.counters["indices_filter_cache_evictions"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FilterCache.Evictions))
+		e.counters["indices_filter_cache_hit_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FilterCache.HitCount))
+		e.counters["indices_filter_cache_total_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.FilterCache.TotalCount))
 
 		e.gauges["indices_query_cache_memory_size_bytes"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.MemorySize))
+		e.gauges["indices_query_cache_cache_size"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.CacheSize))
 		e.counters["indices_query_cache_evictions"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.Evictions))
+		e.counters["indices_query_cache_hit_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.HitCount))
+		e.counters["indices_query_cache_total_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.TotalCount))
 
 		e.gauges["indices_request_cache_memory_size_bytes"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.MemorySize))
+		e.gauges["indices_request_cache_cache_size"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.RequestCache.CacheSize))
 		e.counters["indices_request_cache_evictions"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.QueryCache.Evictions))
+		e.counters["indices_request_cache_hit_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.RequestCache.HitCount))
+		e.counters["indices_request_cache_total_count"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.RequestCache.TotalCount))
 
 		e.gauges["indices_docs"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Docs.Count))
 		e.gauges["indices_docs_deleted"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Docs.Deleted))
@@ -417,6 +493,12 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 		e.counters["indices_refresh_total_time_ms_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Refresh.TotalTime))
 		e.counters["indices_refresh_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Refresh.Total))
+
+		e.counters["indices_search_query_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Search.QueryTotal))
+		e.counters["indices_search_query_time_ms_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Search.QueryTime))
+
+		e.counters["indices_search_fetch_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Search.FetchTotal))
+		e.counters["indices_search_fetch_time_ms_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Search.FetchTime))
 
 		// Transport Stats
 		e.counters["transport_rx_packets_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Transport.RxCount))
