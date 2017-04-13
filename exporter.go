@@ -34,6 +34,11 @@ var (
 		"process_mem_virtual_size_bytes":          "Total virtual memory used in bytes",
 		"process_open_files_count":                "Open file descriptors",
 		"process_max_files_count":                 "Max file descriptors for process",
+		// FIXME: Those look somehow duplicate with the first ones on this slice
+		"indices_fielddata_cache_size":     "Field data cache size",
+		"indices_filter_cache_cache_size":  "Filter cache size",
+		"indices_query_cache_cache_size":   "Query cache size",
+		"indices_request_cache_cache_size": "Request cache size",
 	}
 	counterMetrics = map[string]string{
 		"indices_fielddata_evictions":           "Evictions from field data",
@@ -55,56 +60,20 @@ var (
 		"indices_merges_total_time_ms_total":    "Total time spent merging in milliseconds",
 		"indices_refresh_total":                 "Total refreshes",
 		"indices_refresh_total_time_ms_total":   "Total time spent refreshing",
+		"indices_fielddata_hit_count":           "Hit count of field data",
+		"indices_filter_cache_hit_count":        "Hit count of filter cache",
+		"indices_query_cache_hit_count":         "Hit count of query cache",
+		"indices_request_cache_hit_count":       "Hit count of request cache",
+		"indices_fielddata_total_count":         "Total request count of field data",
+		"indices_filter_cache_total_count":      "Total request count of filter cache",
+		"indices_query_cache_total_count":       "Total request count of query cache",
+		"indices_request_cache_total_count":     "Total request count of request cache",
+		"indices_search_query_total":            "Total number of queries",
+		"indices_search_query_time_ms_total":    "Total time spent querying",
+		"indices_search_fetch_total":            "Total number of fetches",
+		"indices_search_fetch_time_ms_total":    "Total time spent fetching",
 	}
 	counterVecMetrics = map[string]*VecInfo{
-		"indices_fielddata_hit_count": &VecInfo{
-			help:   "Hit count of field data",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_filter_cache_hit_count": &VecInfo{
-			help:   "Hit count of filter cache",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_query_cache_hit_count": &VecInfo{
-			help:   "Hit count of query cache",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_request_cache_hit_count": &VecInfo{
-			help:   "Hit count of request cache",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_fielddata_total_count": &VecInfo{
-			help:   "Total request count of field data",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_filter_cache_total_count": &VecInfo{
-			help:   "Total request count of filter cache",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_query_cache_total_count": &VecInfo{
-			help:   "Total request count of query cache",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_request_cache_total_count": &VecInfo{
-			help:   "Total request count of request cache",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_search_query_total": &VecInfo{
-			help:   "Total number of queries",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_search_query_time_ms_total": &VecInfo{
-			help:   "Total time spent querying",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_search_fetch_total": &VecInfo{
-			help:   "Total number of fetches",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_search_fetch_time_ms_total": &VecInfo{
-			help:   "Total time spent fetching",
-			labels: []string{"cluster", "node"},
-		},
 		"jvm_gc_collection_seconds_count": {
 			help:   "Count of JVM GC runs",
 			labels: []string{"gc"},
@@ -151,22 +120,6 @@ var (
 		"filesystem_data_size_bytes": {
 			help:   "Size of block device in bytes",
 			labels: []string{"mount", "path"},
-		},
-		"indices_fielddata_cache_size": &VecInfo{
-			help:   "Field data cache size",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_filter_cache_cache_size": &VecInfo{
-			help:   "Filter cache size",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_query_cache_cache_size": &VecInfo{
-			help:   "Query cache size",
-			labels: []string{"cluster", "node"},
-		},
-		"indices_request_cache_cache_size": &VecInfo{
-			help:   "Request cache size",
-			labels: []string{"cluster", "node"},
 		},
 		"jvm_memory_committed_bytes": {
 			help:   "JVM memory currently committed by area",
@@ -233,6 +186,10 @@ var (
 	clusterHealthRelocatingShardsDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "cluster_health", "relocating_shards"),
 		"The number of shards that are currently moving from one node to another node.",
+		[]string{"cluster"}, nil)
+	clusterHealthStatusDesc = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "cluster_health", "status"),
+		"Cluster status (0=green, 1=yellow, 2=red).",
 		[]string{"cluster"}, nil)
 	clusterHealthStatusIsGreenDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "cluster_health", "status_is_green"),
@@ -574,6 +531,9 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(clusterHealthNumberOfPendingTasksDesc, prometheus.GaugeValue, float64(clusterHealth.NumberOfPendingTasks), clusterHealth.ClusterName)
 	ch <- prometheus.MustNewConstMetric(clusterHealthRelocatingShardsDesc, prometheus.GaugeValue, float64(clusterHealth.RelocatingShards), clusterHealth.ClusterName)
 	ch <- prometheus.MustNewConstMetric(clusterHealthUnassignedShardsDesc, prometheus.GaugeValue, float64(clusterHealth.UnassignedShards), clusterHealth.ClusterName)
+
+	var clusterStatusMap = map[string]float64{"green": 0, "yellow": 1, "red": 2}
+	ch <- prometheus.MustNewConstMetric(clusterHealthStatusDesc, prometheus.GaugeValue, clusterStatusMap[clusterHealth.Status], clusterHealth.ClusterName)
 
 	statusIsGreen := 0.0
 	if clusterHealth.Status == "green" {
