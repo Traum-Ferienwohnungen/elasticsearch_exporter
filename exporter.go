@@ -39,6 +39,7 @@ var (
 		"indices_filter_cache_cache_size":  "Filter cache size",
 		"indices_query_cache_cache_size":   "Query cache size",
 		"indices_request_cache_cache_size": "Request cache size",
+		"indices_indexing_is_throttled":    "Is node indexing throttled",
 	}
 	counterMetrics = map[string]string{
 		"indices_fielddata_evictions":           "Evictions from field data",
@@ -443,6 +444,7 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 
 		e.counters["indices_indexing_index_time_ms_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Indexing.IndexTime))
 		e.counters["indices_indexing_index_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Indexing.IndexTotal))
+		e.gauges["indices_indexing_is_throttled"].WithLabelValues(allStats.ClusterName, stats.Host).Set(boolToFloat64(stats.Indices.Indexing.IsThrottled))
 
 		e.counters["indices_merges_total_time_ms_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Merges.TotalTime))
 		e.counters["indices_merges_total_size_bytes_total"].WithLabelValues(allStats.ClusterName, stats.Host).Set(float64(stats.Indices.Merges.TotalSize))
@@ -540,13 +542,15 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 		statusIsGreen = 1.0
 	}
 	ch <- prometheus.MustNewConstMetric(clusterHealthStatusIsGreenDesc, prometheus.GaugeValue, statusIsGreen, clusterHealth.ClusterName)
-
-	timedOut := 0.0
-	if clusterHealth.TimedOut {
-		timedOut = 1.0
-	}
-	ch <- prometheus.MustNewConstMetric(clusterHealthTimedOutDesc, prometheus.GaugeValue, timedOut, clusterHealth.ClusterName)
+	ch <- prometheus.MustNewConstMetric(clusterHealthTimedOutDesc, prometheus.GaugeValue, boolToFloat64(clusterHealth.TimedOut), clusterHealth.ClusterName)
 
 	// Successfully processed stats.
 	e.up.Set(1)
+}
+
+func boolToFloat64(b bool) float64 {
+	if b {
+		return 1.0
+	}
+	return 0.0
 }
