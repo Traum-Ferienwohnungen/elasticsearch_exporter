@@ -140,6 +140,7 @@ type NodeStatsIndicesIndexingResponse struct {
 	DeleteTime    int64 `json:"delete_time_in_millis"`
 	DeleteCurrent int64 `json:"delete_current"`
 	IsThrottled   bool  `json:"is_throttled"`
+	ThrottleTime  int64 `json:"throttle_time_in_millis"`
 }
 
 type NodeStatsIndicesMergesResponse struct {
